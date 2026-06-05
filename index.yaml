@@ -1,0 +1,12 @@
+apiVersion: v1
+entries:
+  app:
+  - apiVersion: v2
+    created: "2026-06-05T18:51:46.671095349Z"
+    description: All-purpose chart for a Zeilenwerk app
+    digest: 5e34f287afe2fe0c9a9de3e5c25c8d205b94454da9842de5eb9a4683f10bc8b1
+    name: app
+    urls:
+    - https://github.com/Zeilenwerk/helm-charts/releases/download/app-2.0.0/app-2.0.0.tgz
+    version: 2.0.0
+generated: "2026-06-05T18:51:46.671100869Z"
