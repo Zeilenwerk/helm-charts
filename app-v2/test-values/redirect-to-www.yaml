@@ -1,0 +1,11 @@
+name: example
+image:
+  repository: docker.io/zeilenwerk/example
+  tag: test
+domains:
+  - www.example.com
+tlsDomains:
+  - example.com
+ingress:
+  annotations:
+    nginx.ingress.kubernetes.io/from-to-www-redirect: 'true'

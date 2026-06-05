@@ -1,0 +1,122 @@
+# chartsnap: snapshot_version=v3
+---
+# Source: nextjs/templates/env.secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pulse
+type: Opaque
+stringData:
+  TEST: "true"
+---
+# Source: nextjs/templates/pvc.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-storage
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 1G
+  storageClassName: azurefile-csi
+  volumeMode: Filesystem
+---
+# Source: nextjs/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: pulse
+spec:
+  ports:
+  - port: 80
+    targetPort: 4000
+  selector:
+    app: pulse
+---
+# Source: nextjs/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pulse
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pulse
+  template:
+    metadata:
+      annotations:
+        checksum/config: 42eeca6f6732b2019f0e29334a1b0049cad909a726557458aefeba0720c3a610
+      labels:
+        app: pulse
+    spec:
+      imagePullSecrets:
+      - name: dockerhub-pull
+      containers:
+      - name: pulse
+        image: "docker.io/zeilenwerk/pulse:test"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 4000
+        envFrom:
+        - secretRef:
+            name: pulse
+        volumeMounts:
+        - name: test-storage
+          mountPath: /opt/app/public/uploads
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 4000
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 4000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: 125m
+            memory: 256Mi
+          limits:
+            cpu: 250m
+            memory: 512Mi
+      volumes:
+      - name: test-storage
+        persistentVolumeClaim:
+          claimName: test-storage
+---
+# Source: nextjs/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pulse
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - secretName: pulse-tls
+    hosts:
+    - pulse-aks.zwrk.io
+  rules:
+  - host: pulse-aks.zwrk.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: pulse
+            port:
+              number: 80

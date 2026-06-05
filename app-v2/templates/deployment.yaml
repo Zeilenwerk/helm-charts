@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+spec:
+  replicas: {{ .Values.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/env.secret.yaml") . | sha256sum }}
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      {{- if .Values.strategy }}
+      strategy:
+        {{- range $key, $val := .Values.strategy }}
+        {{ $key }}: {{ $val }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.securityContext }}
+      securityContext:
+        {{- range $key, $val := .Values.securityContext }}
+        {{ $key }}: {{ $val }}
+        {{- end }}
+      {{- end }}
+      imagePullSecrets:
+        - name: dockerhub-pull
+      containers:
+      - name: {{ .Values.name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: {{ .Values.containerPort }}
+        envFrom:
+          - secretRef:
+              name: {{ .Values.name }}
+        volumeMounts:
+          {{- range .Values.additionalVolumes }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              mountPath: {{ .subPath }}
+              {{- end }}
+          {{- end }}
+          {{- range .Values.volumes }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+          {{- end }}
+        {{- if not .Values.disableLivenessProbe }}
+        livenessProbe:
+            httpGet:
+              path: {{ .Values.livenessProbe.path | default "/api/health" }}
+              port: {{ .Values.containerPort }}
+            initialDelaySeconds: {{ .Values.livenessProbe.delaySeconds | default 20 }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds | default 5 }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold | default 3 }}
+        {{- end }}
+        {{- if not .Values.disableReadinessProbe }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.readinessProbe.path | default "/api/health" }}
+            port: {{ .Values.containerPort }}
+          initialDelaySeconds: {{ .Values.readinessProbe.delaySeconds | default 5 }}
+          periodSeconds: {{ .Values.readinessProbe.periodSeconds | default 5 }}
+          timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds | default 3 }}
+          failureThreshold: {{ .Values.readinessProbe.failureThreshold | default 3 }}
+        {{- end }}
+        resources:
+          requests:
+            cpu: {{ print (mulf 62.5 (float64 .Values.computeTier.requests)) "m" }}
+            memory: {{ print (mulf 128 .Values.computeTier.requests) "Mi" }}
+          limits:
+            cpu: {{ print (mulf 62.5 (float64 .Values.computeTier.limits)) "m" }}
+            memory: {{ print (mulf 128 .Values.computeTier.limits) "Mi" }}
+      volumes:
+        {{- range .Values.volumes }}
+          - name: {{ .name }}
+            persistentVolumeClaim:
+              claimName: {{ .name }}
+        {{- end }}
+        {{- range .Values.additionalVolumes }}
+          - name: {{ .name }}
+            {{- if .persistentVolumeClaimName }}
+            persistentVolumeClaim:
+              claimName: {{ .persistentVolumeClaimName }}
+            {{- end }}
+            {{- if .configMapName }}
+            configMap:
+              name: {{ .configMapName }}
+            {{- end }}
+        {{- end }}

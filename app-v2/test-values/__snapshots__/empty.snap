@@ -1,0 +1,75 @@
+# chartsnap: snapshot_version=v3
+---
+# Source: nextjs/templates/env.secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pulse
+type: Opaque
+stringData:
+---
+# Source: nextjs/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: pulse
+spec:
+  ports:
+  - port: 80
+    targetPort: 3000
+  selector:
+    app: pulse
+---
+# Source: nextjs/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pulse
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pulse
+  template:
+    metadata:
+      annotations:
+        checksum/config: c914ec5a1974fe2348182baf5aaa63c51d439daa4de1fb69c9c13a240b06b42c
+      labels:
+        app: pulse
+    spec:
+      imagePullSecrets:
+      - name: dockerhub-pull
+      containers:
+      - name: pulse
+        image: "docker.io/zeilenwerk/pulse:test"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - secretRef:
+            name: pulse
+        volumeMounts:
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: 62.5m
+            memory: 128Mi
+          limits:
+            cpu: 125m
+            memory: 256Mi
+      volumes:

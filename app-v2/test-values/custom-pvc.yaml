@@ -1,0 +1,12 @@
+name: pulse
+image:
+  repository: docker.io/zeilenwerk/pulse
+  tag: test
+strategy:
+  type: Recreate
+volumes:
+- name: test-storage
+  mountPath: /opt/app/public/uploads
+  accessMode: ReadWriteOnce
+  storageClassName: managed-csi
+  size: 1G

@@ -1,0 +1,30 @@
+# The name of this app, will be used as a name of or prefix to all resources.
+name: pulse
+# Where the app's docker image is located, and which tag of it to deploy.
+image:
+  repository: docker.io/zeilenwerk/pulse
+  tag: test
+# How many pods of the app should be run in parallel.
+replicas: 2
+# Which domains the app should serve. DNS should already be configured to obtain certicates.
+domains:
+  - pulse-aks.zwrk.io
+# Environment variables that are passed on to the container at runtime.
+envVars:
+  TEST: true
+# How much resources the app needs by default, and at most. Each unit equals 128MiB and 1/8 vCPU.
+computeTier:
+  requests: 2
+  limits: 4
+# Which port the container exposes the app on.
+containerPort: 4000
+# Additional properties for the container securityContext (PodSpec).
+securityContext:
+# Which volumes, if any, the app needs. See required keys below (name, mountPath, size).
+volumes:
+- name: test-storage
+  mountPath: /opt/app/public/uploads
+  size: 1G
+ingress:
+  annotations:
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"

@@ -1,0 +1,103 @@
+# chartsnap: snapshot_version=v3
+---
+# Source: nextjs/templates/env.secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example
+type: Opaque
+stringData:
+---
+# Source: nextjs/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: example
+spec:
+  ports:
+  - port: 80
+    targetPort: 3000
+  selector:
+    app: example
+---
+# Source: nextjs/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example
+  template:
+    metadata:
+      annotations:
+        checksum/config: d040f3d5ef0e7013f1741e101f174c3ffdb9586e7bd08d30e4e31faecd301186
+      labels:
+        app: example
+    spec:
+      imagePullSecrets:
+      - name: dockerhub-pull
+      containers:
+      - name: example
+        image: "docker.io/zeilenwerk/example:test"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - secretRef:
+            name: example
+        volumeMounts:
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: 62.5m
+            memory: 128Mi
+          limits:
+            cpu: 125m
+            memory: 256Mi
+      volumes:
+---
+# Source: nextjs/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - secretName: example-tls
+    hosts:
+    - www.example.com
+    - example.com
+  rules:
+  - host: www.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: example
+            port:
+              number: 80

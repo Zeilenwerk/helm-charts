@@ -1,0 +1,14 @@
+{{- range .Values.volumes }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .name }}
+spec:
+  accessModes:
+    - {{ .accessMode | default "ReadWriteMany" }}
+  resources:
+    requests:
+      storage: {{ .size }}
+  storageClassName: {{ .storageClassName | default "azurefile-csi" }}
+  volumeMode: Filesystem
+{{- end }}

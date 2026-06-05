@@ -1,0 +1,4 @@
+name: pulse
+image:
+  repository: docker.io/zeilenwerk/pulse
+  tag: test
