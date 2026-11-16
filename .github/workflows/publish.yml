@@ -1,0 +1,53 @@
+name: Test and publish charts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io/zeilenwerk/helm-charts
+
+jobs:
+  charts:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.17.0
+
+      - name: Install chartsnap
+        run: helm plugin install https://github.com/jlandowner/helm-chartsnap
+
+      - name: Lint and snapshot-test
+        run: |
+          for chart in */Chart.yaml; do
+            dir=$(dirname "$chart")
+            helm lint "$dir"
+            helm chartsnap -c "$dir" -f "$dir/test-values"
+          done
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Publish new chart versions
+        if: github.event_name == 'push'
+        run: |
+          for chart in */Chart.yaml; do
+            dir=$(dirname "$chart")
+            name=$(yq '.name' "$chart")
+            version=$(yq '.version' "$chart")
+            # Anonymous check: charts are public, a missing package or tag fails here
+            if helm show chart "oci://$REGISTRY/$name" --version "$version" >/dev/null 2>&1; then
+              echo "::notice::$name $version already published, skipping"
+              continue
+            fi
+            helm package "$dir" --destination dist
+            helm push "dist/$name-$version.tgz" "oci://$REGISTRY"
+          done
