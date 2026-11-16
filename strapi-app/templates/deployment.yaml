@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      {{ if .Values.securityContext }}
+      securityContext:
+        {{- range $key, $val := .Values.securityContext }}
+        {{ $key }}: {{ $val }}
+        {{- end }}
+      {{ end }}
+      imagePullSecrets:
+        - name: dockerhub-pull
+      containers:
+        - name: {{ .Values.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.name }}
+          volumeMounts:
+            - mountPath: {{ .Values.storage.mountPath }}
+              name: {{ .Values.storage.name }}
+          livenessProbe:
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            tcpSocket:
+              port: {{ .Values.containerPort }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.containerPort }}
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: {{ print (mulf 25 (float64 .Values.computeTier.requests)) "m" }}
+              memory: {{ print (mulf 0.1 .Values.computeTier.requests) "Gi" }}
+            limits:
+              cpu: {{ print (mulf 25 (float64 .Values.computeTier.limits)) "m" }}
+              memory: {{ print (mulf 0.1 .Values.computeTier.limits) "Gi" }}
+      volumes:
+        - name: {{ .Values.storage.name }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.storage.name }}

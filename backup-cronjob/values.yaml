@@ -1,0 +1,52 @@
+activeDeadlineSeconds: 7200
+backoffLimit: 3
+# Environment variables that are passed on to the container at runtime.
+envVars:
+failedJobsHistoryLimit: 1
+backupImage:
+  repository: zeilenwerk/openshift-backup
+  tag: latest
+# * * * * *
+# │ │ │ │ │
+# │ │ │ │ └───── Day of the week (0 - 7) (Sunday = 0 or 7)
+# │ │ │ └──────── Month (1 - 12)
+# │ │ └──────────── Day of the month (1 - 31)
+# │ └──────────────── Hour (0 - 23)
+# └──────────────────── Minute (0 - 59)
+# At 00:00 every day
+schedule: 0 0 * * *
+successfulJobsHistoryLimit: 0
+# db backup command
+# command:
+#   - "sh"
+#   - "-eo"
+#   - "pipefail"
+#   - "-c"
+#   - >
+#     echo "Starting backup...";
+#     echo "Creating bucket...";
+#     aws --endpoint-url "https://sos-$AWS_DEFAULT_REGION.exo.io" --region "$AWS_DEFAULT_REGION" s3 mb s3://$BUCKET || echo "=> Bucket exists or error occured";
+#     echo "Checking access to bucket...";
+#     aws s3api head-bucket --endpoint-url "https://sos-$AWS_DEFAULT_REGION.exo.io" --bucket $BUCKET;
+#     echo "Starting database dump...";
+#     pg_dump -v -Fc -f /tmp/db-dump;
+#     echo "Uploading database dump...";
+#     aws --endpoint-url "https://sos-$AWS_DEFAULT_REGION.exo.io" s3 cp /tmp/db-dump s3://$BUCKET/backup-$(date +%y%m%d_%H%M).pgdump;
+#     echo "Notifying Slack...";
+#     curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"Successfully backed up $PROJECT_NAME ($(du -h /tmp/db-dump | cut -f1))\"}" $SLACK_WEBHOOK_URL
+# storage backup command
+# command:
+#   - "sh"
+#   - "-eo"
+#   - "pipefail"
+#   - "-c"
+#   - >
+#     echo "Starting backup...";
+#     echo "Creating bucket...";
+#     aws --endpoint-url "https://sos-$AWS_DEFAULT_REGION.exo.io" --region "$AWS_DEFAULT_REGION" s3 mb s3://$BUCKET || echo "=> Bucket exists or error occured";
+#     echo "Checking access to bucket...";
+#     aws s3api head-bucket --endpoint-url "https://sos-$AWS_DEFAULT_REGION.exo.io" --bucket $BUCKET;
+#     echo "Synching files...";
+#     aws --endpoint-url "https://sos-$AWS_DEFAULT_REGION.exo.io" s3 sync /tmp/storage s3://$BUCKET;
+#     echo "Notifying Slack...";
+#     curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"Successfully synched storage backup for $PROJECT_NAME\"}" $SLACK_WEBHOOK_URL

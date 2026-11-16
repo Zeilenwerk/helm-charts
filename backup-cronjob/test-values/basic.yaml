@@ -1,0 +1,10 @@
+name: backup-cronjob
+command:
+  - "sh"
+  - "-eo"
+  - "pipefail"
+  - "-c"
+  - >
+    echo "Starting backup...";
+envVars:
+  BUCKET: "backup-bucket"

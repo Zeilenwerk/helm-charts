@@ -1,0 +1,12 @@
+name: pulse
+image:
+  repository: docker.io/zeilenwerk/pulse
+  tag: test
+additionalVolumes:
+  - name: vm1
+    configMapName: cm-name
+    mountPath: /vm1/mount/path
+    subPath: sub.path
+  - name: vm2
+    persistentVolumeClaimName: pvc-name
+    mountPath: /vm2/mount/path

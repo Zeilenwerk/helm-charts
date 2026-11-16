@@ -1,0 +1,46 @@
+# The name of this app, will be used as a name of or prefix to all resources.
+name:
+# Where the app's docker image is located, and which tag of it to deploy.
+image:
+  repository:
+  tag: latest
+# How many pods of the app should be run in parallel.
+replicas: 1
+# Which domains the app should serve. DNS should already be configured to obtain certicates.
+domains:
+# Domains where only a letsencrypt certificate is needed, e.g. root domain which redirects to www.
+tlsDomains:
+# Environment variables that are passed on to the container at runtime.
+envVars:
+# How much resources the app needs by default, and at most. Each unit equals 128MiB and 1/8 vCPU.
+computeTier:
+  requests: 1
+  limits: 2
+# Which port the container exposes the app on.
+containerPort: 3000
+# Which strategy to use for the deployment.
+strategy:
+#   type: RollingUpdate
+# Additional properties for the container securityContext (PodSpec).
+securityContext:
+# Which volumes, if any, the app needs. See required keys below (name, mountPath, size).
+volumes:
+# - name: app-storage
+#   mountPath: /opt/app/public/uploads
+#   accessMode: ReadWriteOnce (optional, default ReadWriteMany)
+#   storageClassName: managed-csi (optional, default azurefile-csi)
+#   size: 1G
+ingress:
+  annotations:
+#     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+# configure readiness and liveness probe if your app is slow
+readinessProbe: {}
+  # delaySeconds:
+  # periodSeconds:
+  # timeoutSeconds:
+  # failureThreshold:
+livenessProbe: {}
+  # delaySeconds:
+  # periodSeconds:
+  # timeoutSeconds:
+  # failureThreshold:

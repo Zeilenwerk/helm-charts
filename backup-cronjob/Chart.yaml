@@ -1,0 +1,4 @@
+apiVersion: v2
+name: backup-cronjob
+version: 1.0.0
+description: Template for a Backup CronJob

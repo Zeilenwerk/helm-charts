@@ -1,0 +1,17 @@
+name:
+image:
+  repository:
+  tag:
+domains:
+envVars:
+containerPort: 3000
+storage:
+  mountPath: /opt/app/public/uploads
+  className: azurefile-csi
+  accessMode: ReadWriteMany
+  name: app-storage
+  requests: 1G
+computeTier:
+  requests: 1
+  limits: 2
+replicas: 1

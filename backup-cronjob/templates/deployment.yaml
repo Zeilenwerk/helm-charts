@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.name }}
+spec:
+  schedule: {{ .Values.schedule }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.backoffLimit }}
+      activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
+      template:
+        metadata:
+          annotations:
+            checksum/config: {{ include (print $.Template.BasePath "/env.secret.yaml") . | sha256sum }}
+          labels:
+            app: {{ .Values.name }}
+        spec:
+          containers:
+            - name: {{ .Values.name }}-container
+              image: "{{ .Values.backupImage.repository }}:{{ .Values.backupImage.tag }}"
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 250Mi
+                  ephemeral-storage: 200Mi
+              command:
+              {{- range .Values.command }}
+                - {{ . | quote }}
+              {{- end }}
+              envFrom:
+                - secretRef:
+                    name: {{ .Values.name }}
+              {{- if .Values.volumes }}
+              volumeMounts:
+              {{- range .Values.volumes }}
+                - name: {{ .name }}
+                  mountPath: {{ .mountPath }}
+              {{- end }}
+              {{- end }}
+          {{- if .Values.volumes }}
+          volumes:
+            {{- range .Values.volumes }}
+            - name: {{ .name }}
+              persistentVolumeClaim:
+                claimName: {{ .name }}
+            {{- end }}
+          {{- end }}
+          restartPolicy: OnFailure

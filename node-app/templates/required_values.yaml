@@ -1,0 +1,4 @@
+# This file doesn't add any resources but specifies the require values of the chart.
+{{- $_ := required "name is a required value" .Values.name}}
+{{- $_ := required "image.repository is a required value" .Values.image.repository}}
+{{- $_ := required "image.tag is a required value" .Values.image.tag}}

@@ -1,0 +1,101 @@
+# chartsnap: snapshot_version=v3
+---
+# Source: strapi-app/templates/env.secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pulse
+type: Opaque
+stringData:
+---
+# Source: strapi-app/templates/pvc.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: app-storage
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 1G
+  storageClassName: azurefile-csi
+  volumeMode: Filesystem
+---
+# Source: strapi-app/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: pulse
+spec:
+  ports:
+  - port: 80
+    targetPort: 3000
+  selector:
+    app: pulse
+---
+# Source: strapi-app/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pulse
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pulse
+  template:
+    metadata:
+      labels:
+        app: pulse
+    spec:
+      imagePullSecrets:
+      - name: dockerhub-pull
+      containers:
+      - name: pulse
+        image: "docker.io/zeilenwerk/pulse:test"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - secretRef:
+            name: pulse
+        volumeMounts:
+        - mountPath: /opt/app/public/uploads
+          name: app-storage
+        livenessProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          tcpSocket:
+            port: 3000
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 25m
+            memory: 0.1Gi
+          limits:
+            cpu: 50m
+            memory: 0.2Gi
+      volumes:
+      - name: app-storage
+        persistentVolumeClaim:
+          claimName: app-storage
+---
+# Source: strapi-app/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pulse
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+  - secretName: pulse-tls
+    hosts:
+  rules:

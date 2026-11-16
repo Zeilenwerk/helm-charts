@@ -1,0 +1,50 @@
+# chartsnap: snapshot_version=v3
+---
+# Source: backup-cronjob/templates/env.secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backup-cronjob
+type: Opaque
+stringData:
+  BUCKET: "backup-bucket"
+---
+# Source: backup-cronjob/templates/deployment.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-cronjob
+spec:
+  schedule: 0 0 * * *
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      activeDeadlineSeconds: 7200
+      template:
+        metadata:
+          annotations:
+            checksum/config: d7d4d180ddd861f0bfa7c45fe40773857758dd2fb4706ca7f9f2b23c8e19ddf6
+          labels:
+            app: backup-cronjob
+        spec:
+          containers:
+          - name: backup-cronjob-container
+            image: "zeilenwerk/openshift-backup:latest"
+            resources:
+              requests:
+                cpu: 250m
+                memory: 250Mi
+                ephemeral-storage: 200Mi
+            command:
+            - "sh"
+            - "-eo"
+            - "pipefail"
+            - "-c"
+            - "echo \"Starting backup...\";\n"
+            envFrom:
+            - secretRef:
+                name: backup-cronjob
+          restartPolicy: OnFailure

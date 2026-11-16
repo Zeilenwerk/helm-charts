@@ -1,0 +1,15 @@
+name: pulse
+image:
+  repository: docker.io/zeilenwerk/pulse
+  tag: test
+volumes:
+- name: test-storage
+  mountPath: /opt/app/public/uploads
+  accessMode: ReadWriteOnce
+  storageClassName: managed-csi
+  size: 1G
+additionalVolumes:
+  - name: vm-name
+    configMapName: cm-name
+    mountPath: /vm/mount/path
+    subPath: sub.path
