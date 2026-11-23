@@ -1,0 +1,38 @@
+# chartsnap: snapshot_version=v3
+---
+# Source: service-account/templates/sa.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ci-user-
+  namespace: test
+  annotations:
+    helm.sh/resource-policy: keep
+---
+# Source: service-account/templates/secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ci-user-token-
+  namespace: test
+  annotations:
+    kubernetes.io/service-account.name: ci-user-
+    helm.sh/resource-policy: keep
+type: kubernetes.io/service-account-token
+---
+# Source: service-account/templates/role-binding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ci-user-rolebinding-
+  namespace: test
+  annotations:
+    helm.sh/resource-policy: keep
+subjects:
+- kind: ServiceAccount
+  name: ci-user-
+  namespace: test
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
