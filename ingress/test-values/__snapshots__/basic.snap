@@ -1,0 +1,36 @@
+# chartsnap: snapshot_version=v3
+---
+# Source: ingress/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test
+  annotations:
+    cert-manager.io/cluster-issuer: prod
+spec:
+  tls:
+  - secretName: test-tls
+    hosts:
+    - zeilenwerk.ch
+    - zwrk.io
+  rules:
+  - host: zeilenwerk.ch
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web
+            port:
+              number: 80
+  - host: zwrk.io
+    http:
+      paths:
+      - path: /zwrk
+        pathType: Prefix
+        backend:
+          service:
+            name: web
+            port:
+              number: 80

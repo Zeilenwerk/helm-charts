@@ -1,0 +1,4 @@
+name: test
+rules:
+  - host: zeilenwerk.ch
+    serviceName: web

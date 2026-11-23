@@ -1,0 +1,19 @@
+# chartsnap: snapshot_version=v3
+---
+# Source: ingress/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test
+spec:
+  rules:
+  - host: zeilenwerk.ch
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web
+            port:
+              number: 80

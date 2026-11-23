@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.name }}
+  {{- if .Values.certManagerIssuer }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.certManagerIssuer }}
+  {{- end }}
+spec:
+  {{- if .Values.certManagerIssuer }}
+  tls:
+  - secretName: {{ .Values.name }}-tls
+    hosts:
+    {{- range .Values.rules }}
+    - {{ .host }}
+    {{- end }}
+  {{- end }}
+  rules:
+  {{- range .Values.rules }}
+  - host: {{ .host }}
+    http:
+      paths:
+      - path: {{ .path | default "/" }}
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .serviceName }}
+            port:
+              number: 80
+  {{- end }}
