@@ -7,6 +7,9 @@ metadata:
     cert-manager.io/cluster-issuer: {{ .Values.certManagerIssuer }}
   {{- end }}
 spec:
+  {{- if .Values.ingressClassName }}
+  ingressClassName: {{ .Values.ingressClassName }}
+  {{- end }}
   {{- if .Values.certManagerIssuer }}
   tls:
   - secretName: {{ .Values.name }}-tls

@@ -1,5 +1,6 @@
 name: test
 certManagerIssuer: prod
+ingressClassName: nginx
 rules:
   - host: zeilenwerk.ch
     serviceName: web
