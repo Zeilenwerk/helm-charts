@@ -1,0 +1,10 @@
+# chartsnap: snapshot_version=v3
+---
+# Source: docker-pull-secret/templates/dockerhub-pull.yaml
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/dockerconfigjson
+metadata:
+  name: dockerhub-pull
+data:
+  .dockerconfigjson: test

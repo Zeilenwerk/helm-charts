@@ -1,0 +1,4 @@
+apiVersion: v2
+name: docker-pull-secret
+version: 1.0.0
+description: Adds pull secret for docker
